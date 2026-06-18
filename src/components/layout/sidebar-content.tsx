@@ -6,7 +6,9 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 
-const nav = [
+import type { Role } from "@/lib/mock-data";
+
+const nav: { to: string; label: string; icon: typeof LayoutDashboard; roles: Role[] }[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "staff"] },
   { to: "/products", label: "Products", icon: Package, roles: ["admin", "staff"] },
   { to: "/inventory", label: "Inventory", icon: Boxes, roles: ["admin", "staff"] },
@@ -15,7 +17,7 @@ const nav = [
   { to: "/reports", label: "Reports", icon: BarChart3, roles: ["admin"] },
   { to: "/staff", label: "Staff Management", icon: Users, roles: ["admin"] },
   { to: "/settings", label: "Settings", icon: SettingsIcon, roles: ["admin", "staff"] },
-] as const;
+];
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuth();
