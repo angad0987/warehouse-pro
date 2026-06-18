@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppOrdersRouteImport } from './routes/_app.orders'
 import { Route as AppInventoryRouteImport } from './routes/_app.inventory'
+import { Route as AppDispatchesRouteImport } from './routes/_app.dispatches'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppProductsIdRouteImport } from './routes/_app.products.$id'
 import { Route as AppOrdersIdRouteImport } from './routes/_app.orders.$id'
@@ -54,6 +55,11 @@ const AppInventoryRoute = AppInventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDispatchesRoute = AppDispatchesRouteImport.update({
+  id: '/dispatches',
+  path: '/dispatches',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AppDashboardRoute
+  '/dispatches': typeof AppDispatchesRoute
   '/inventory': typeof AppInventoryRoute
   '/orders': typeof AppOrdersRouteWithChildren
   '/products': typeof AppProductsRouteWithChildren
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AppDashboardRoute
+  '/dispatches': typeof AppDispatchesRoute
   '/inventory': typeof AppInventoryRoute
   '/orders': typeof AppOrdersRouteWithChildren
   '/products': typeof AppProductsRouteWithChildren
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/dispatches': typeof AppDispatchesRoute
   '/_app/inventory': typeof AppInventoryRoute
   '/_app/orders': typeof AppOrdersRouteWithChildren
   '/_app/products': typeof AppProductsRouteWithChildren
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/dashboard'
+    | '/dispatches'
     | '/inventory'
     | '/orders'
     | '/products'
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/dashboard'
+    | '/dispatches'
     | '/inventory'
     | '/orders'
     | '/products'
@@ -135,6 +146,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/_app/dashboard'
+    | '/_app/dispatches'
     | '/_app/inventory'
     | '/_app/orders'
     | '/_app/products'
@@ -200,6 +212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInventoryRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/dispatches': {
+      id: '/_app/dispatches'
+      path: '/dispatches'
+      fullPath: '/dispatches'
+      preLoaderRoute: typeof AppDispatchesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -250,6 +269,7 @@ const AppProductsRouteWithChildren = AppProductsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
+  AppDispatchesRoute: typeof AppDispatchesRoute
   AppInventoryRoute: typeof AppInventoryRoute
   AppOrdersRoute: typeof AppOrdersRouteWithChildren
   AppProductsRoute: typeof AppProductsRouteWithChildren
@@ -257,6 +277,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
+  AppDispatchesRoute: AppDispatchesRoute,
   AppInventoryRoute: AppInventoryRoute,
   AppOrdersRoute: AppOrdersRouteWithChildren,
   AppProductsRoute: AppProductsRouteWithChildren,
