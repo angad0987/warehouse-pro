@@ -14,6 +14,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppStaffRouteImport } from './routes/_app.staff'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppOrdersRouteImport } from './routes/_app.orders'
@@ -45,6 +46,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppStaffRoute = AppStaffRouteImport.update({
   id: '/staff',
   path: '/staff',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const AppReportsRoute = AppReportsRouteImport.update({
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/orders': typeof AppOrdersRouteWithChildren
   '/products': typeof AppProductsRouteWithChildren
   '/reports': typeof AppReportsRoute
+  '/settings': typeof AppSettingsRoute
   '/staff': typeof AppStaffRoute
   '/orders/$id': typeof AppOrdersIdRoute
   '/products/$id': typeof AppProductsIdRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/orders': typeof AppOrdersRouteWithChildren
   '/products': typeof AppProductsRouteWithChildren
   '/reports': typeof AppReportsRoute
+  '/settings': typeof AppSettingsRoute
   '/staff': typeof AppStaffRoute
   '/orders/$id': typeof AppOrdersIdRoute
   '/products/$id': typeof AppProductsIdRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/_app/orders': typeof AppOrdersRouteWithChildren
   '/_app/products': typeof AppProductsRouteWithChildren
   '/_app/reports': typeof AppReportsRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_app/staff': typeof AppStaffRoute
   '/_app/orders/$id': typeof AppOrdersIdRoute
   '/_app/products/$id': typeof AppProductsIdRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/reports'
+    | '/settings'
     | '/staff'
     | '/orders/$id'
     | '/products/$id'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/reports'
+    | '/settings'
     | '/staff'
     | '/orders/$id'
     | '/products/$id'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/_app/orders'
     | '/_app/products'
     | '/_app/reports'
+    | '/_app/settings'
     | '/_app/staff'
     | '/_app/orders/$id'
     | '/_app/products/$id'
@@ -220,6 +232,13 @@ declare module '@tanstack/react-router' {
       path: '/staff'
       fullPath: '/staff'
       preLoaderRoute: typeof AppStaffRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/reports': {
@@ -312,6 +331,7 @@ interface AppRouteChildren {
   AppOrdersRoute: typeof AppOrdersRouteWithChildren
   AppProductsRoute: typeof AppProductsRouteWithChildren
   AppReportsRoute: typeof AppReportsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppStaffRoute: typeof AppStaffRoute
 }
 
@@ -322,6 +342,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOrdersRoute: AppOrdersRouteWithChildren,
   AppProductsRoute: AppProductsRouteWithChildren,
   AppReportsRoute: AppReportsRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppStaffRoute: AppStaffRoute,
 }
 
