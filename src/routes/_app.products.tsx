@@ -16,7 +16,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, StatusBadge } from "@/components/layout/app-shell";
-import { products as seed, categories, type Product } from "@/lib/mock-data";
+import { products as seed, categories, clients, clientName, type Product } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/products")({
@@ -24,35 +26,41 @@ export const Route = createFileRoute("/_app/products")({
   head: () => ({ meta: [{ title: "Products — CoreWarehousing WMS" }] }),
 });
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 8;
 
 function ProductsPage() {
+  const { user } = useAuth();
+  const canManage = can(user?.role, "products.manage");
+  const canDelete = can(user?.role, "products.delete");
+
   const [items, setItems] = useState<Product[]>(seed);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("all");
+  const [clientFilter, setClientFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", sku: "", category: categories[0], description: "" });
+  const [form, setForm] = useState({ name: "", sku: "", clientId: clients[0]?.id ?? "", category: categories[0], description: "" });
 
   const filtered = useMemo(() => items.filter(p => {
     const matchQ = !q || p.name.toLowerCase().includes(q.toLowerCase()) || p.sku.toLowerCase().includes(q.toLowerCase());
     const matchC = cat === "all" || p.category === cat;
-    return matchQ && matchC;
-  }), [items, q, cat]);
+    const matchCl = clientFilter === "all" || p.clientId === clientFilter;
+    return matchQ && matchC && matchCl;
+  }), [items, q, cat, clientFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const onAdd = () => {
-    if (!form.name || !form.sku) { toast.error("Name and SKU required"); return; }
+    if (!form.name || !form.sku || !form.clientId) { toast.error("Name, SKU and client required"); return; }
     const p: Product = {
-      id: `p${Date.now()}`, name: form.name, sku: form.sku, category: form.category,
+      id: `p${Date.now()}`, name: form.name, sku: form.sku, clientId: form.clientId, category: form.category,
       description: form.description, stock: 0, reorderLevel: 20, location: "—",
       updatedAt: new Date().toISOString().slice(0, 10),
     };
     setItems([p, ...items]);
     setOpen(false);
-    setForm({ name: "", sku: "", category: categories[0], description: "" });
+    setForm({ name: "", sku: "", clientId: clients[0]?.id ?? "", category: categories[0], description: "" });
     toast.success("Product added");
   };
 
@@ -65,8 +73,8 @@ function ProductsPage() {
     <div>
       <PageHeader
         title="Products"
-        description="Manage your product catalog and SKUs."
-        actions={
+        description="Client-owned products stored across your warehouse."
+        actions={canManage && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="mr-2 h-4 w-4" /> Add Product</Button>
@@ -76,6 +84,13 @@ function ProductsPage() {
               <div className="grid gap-4 py-2">
                 <div className="grid gap-2"><Label>Product Name</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
                 <div className="grid gap-2"><Label>SKU</Label><Input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} /></div>
+                <div className="grid gap-2">
+                  <Label>Client (Product Owner)</Label>
+                  <Select value={form.clientId} onValueChange={v => setForm({ ...form, clientId: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+                    <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
                 <div className="grid gap-2">
                   <Label>Category</Label>
                   <Select value={form.category} onValueChange={v => setForm({ ...form, category: v })}>
@@ -91,18 +106,25 @@ function ProductsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-        }
+        )}
       />
 
       <Card className="border-border/60">
         <CardContent className="p-4 sm:p-6">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
+          <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={q} onChange={e => { setQ(e.target.value); setPage(1); }} placeholder="Search by name or SKU…" className="pl-9" />
             </div>
+            <Select value={clientFilter} onValueChange={v => { setClientFilter(v); setPage(1); }}>
+              <SelectTrigger><SelectValue placeholder="Client" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All clients</SelectItem>
+                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={cat} onValueChange={v => { setCat(v); setPage(1); }}>
-              <SelectTrigger className="w-full sm:w-56"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All categories</SelectItem>
                 {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -119,8 +141,9 @@ function ProductsPage() {
                   <TableRow>
                     <TableHead>SKU</TableHead>
                     <TableHead>Product Name</TableHead>
+                    <TableHead>Client</TableHead>
                     <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Stock</TableHead>
+                    <TableHead className="text-right">Current Stock</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -132,28 +155,31 @@ function ProductsPage() {
                       <TableRow key={p.id}>
                         <TableCell className="font-mono text-xs">{p.sku}</TableCell>
                         <TableCell className="font-medium">{p.name}</TableCell>
+                        <TableCell>{clientName(p.clientId)}</TableCell>
                         <TableCell className="text-muted-foreground">{p.category}</TableCell>
                         <TableCell className="text-right font-medium">{p.stock}</TableCell>
                         <TableCell><StatusBadge status={low ? "Pending" : "Active"} /></TableCell>
                         <TableCell className="text-right">
                           <div className="inline-flex gap-1">
                             <Button asChild variant="ghost" size="icon"><Link to="/products/$id" params={{ id: p.id }}><Eye className="h-4 w-4" /></Link></Button>
-                            <Button variant="ghost" size="icon" onClick={() => toast("Edit coming soon")}><Pencil className="h-4 w-4" /></Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete {p.name}?</AlertDialogTitle>
-                                  <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => onDelete(p.id)}>Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            {canManage && <Button variant="ghost" size="icon" onClick={() => toast("Edit coming soon")}><Pencil className="h-4 w-4" /></Button>}
+                            {canDelete && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete {p.name}?</AlertDialogTitle>
+                                    <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => onDelete(p.id)}>Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

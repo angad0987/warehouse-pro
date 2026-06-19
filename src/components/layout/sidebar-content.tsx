@@ -1,22 +1,22 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Package, Boxes, ClipboardList, Truck,
-  BarChart3, Users, Settings as SettingsIcon, Warehouse,
+  BarChart3, Users, Settings as SettingsIcon, Warehouse, Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { can, type Permission } from "@/lib/rbac";
 
-import type { Role } from "@/lib/mock-data";
-
-const nav: { to: string; label: string; icon: typeof LayoutDashboard; roles: Role[] }[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "staff"] },
-  { to: "/products", label: "Products", icon: Package, roles: ["admin", "staff"] },
-  { to: "/inventory", label: "Inventory", icon: Boxes, roles: ["admin", "staff"] },
-  { to: "/orders", label: "Orders", icon: ClipboardList, roles: ["admin", "staff"] },
-  { to: "/dispatches", label: "Dispatches", icon: Truck, roles: ["admin", "staff"] },
-  { to: "/reports", label: "Reports", icon: BarChart3, roles: ["admin"] },
-  { to: "/staff", label: "Staff Management", icon: Users, roles: ["admin"] },
-  { to: "/settings", label: "Settings", icon: SettingsIcon, roles: ["admin", "staff"] },
+const nav: { to: string; label: string; icon: typeof LayoutDashboard; perm: Permission }[] = [
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, perm: "dashboard.view" },
+  { to: "/clients", label: "Clients", icon: Building2, perm: "clients.view" },
+  { to: "/products", label: "Products", icon: Package, perm: "products.view" },
+  { to: "/inventory", label: "Inventory", icon: Boxes, perm: "inventory.view" },
+  { to: "/orders", label: "Orders", icon: ClipboardList, perm: "orders.view" },
+  { to: "/dispatches", label: "Dispatches", icon: Truck, perm: "dispatches.view" },
+  { to: "/reports", label: "Reports", icon: BarChart3, perm: "reports.view" },
+  { to: "/staff", label: "Staff Management", icon: Users, perm: "staff.manage" },
+  { to: "/settings", label: "Settings", icon: SettingsIcon, perm: "settings.view" },
 ];
 
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -37,7 +37,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-1">
-          {nav.filter(i => i.roles.includes(role)).map(item => {
+          {nav.filter(i => can(role, i.perm)).map(item => {
             const active = pathname === item.to || pathname.startsWith(item.to + "/");
             const Icon = item.icon;
             return (
