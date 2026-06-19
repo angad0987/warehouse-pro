@@ -93,7 +93,7 @@ function DispatchDetail() {
               <TableHeader><TableRow><TableHead>SKU</TableHead><TableHead>Product</TableHead><TableHead className="text-right">Qty</TableHead></TableRow></TableHeader>
               <TableBody>
                 {!order && <TableRow><TableCell colSpan={3} className="py-6 text-center text-muted-foreground">No linked order.</TableCell></TableRow>}
-                {order?.items.map((i, idx) => {
+                {order?.items.map((i: { productId: string; qty: number }, idx: number) => {
                   const p = products.find(x => x.id === i.productId);
                   return (
                     <TableRow key={idx}>

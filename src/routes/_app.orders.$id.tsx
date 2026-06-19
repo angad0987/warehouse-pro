@@ -84,7 +84,7 @@ function OrderDetail() {
             <Table>
               <TableHeader><TableRow><TableHead>SKU</TableHead><TableHead>Product</TableHead><TableHead className="text-right">Qty</TableHead></TableRow></TableHeader>
               <TableBody>
-                {initial.items.map((i, idx) => {
+                {initial.items.map((i: { productId: string; qty: number }, idx: number) => {
                   const p = products.find(x => x.id === i.productId);
                   return (
                     <TableRow key={idx}>

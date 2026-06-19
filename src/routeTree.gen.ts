@@ -21,8 +21,11 @@ import { Route as AppOrdersRouteImport } from './routes/_app.orders'
 import { Route as AppInventoryRouteImport } from './routes/_app.inventory'
 import { Route as AppDispatchesRouteImport } from './routes/_app.dispatches'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppClientsRouteImport } from './routes/_app.clients'
 import { Route as AppProductsIdRouteImport } from './routes/_app.products.$id'
 import { Route as AppOrdersIdRouteImport } from './routes/_app.orders.$id'
+import { Route as AppDispatchesIdRouteImport } from './routes/_app.dispatches.$id'
+import { Route as AppClientsIdRouteImport } from './routes/_app.clients.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -83,6 +86,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppClientsRoute = AppClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProductsIdRoute = AppProductsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -93,19 +101,32 @@ const AppOrdersIdRoute = AppOrdersIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppOrdersRoute,
 } as any)
+const AppDispatchesIdRoute = AppDispatchesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppDispatchesRoute,
+} as any)
+const AppClientsIdRoute = AppClientsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppClientsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
-  '/dispatches': typeof AppDispatchesRoute
+  '/dispatches': typeof AppDispatchesRouteWithChildren
   '/inventory': typeof AppInventoryRoute
   '/orders': typeof AppOrdersRouteWithChildren
   '/products': typeof AppProductsRouteWithChildren
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
   '/staff': typeof AppStaffRoute
+  '/clients/$id': typeof AppClientsIdRoute
+  '/dispatches/$id': typeof AppDispatchesIdRoute
   '/orders/$id': typeof AppOrdersIdRoute
   '/products/$id': typeof AppProductsIdRoute
 }
@@ -113,14 +134,17 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
-  '/dispatches': typeof AppDispatchesRoute
+  '/dispatches': typeof AppDispatchesRouteWithChildren
   '/inventory': typeof AppInventoryRoute
   '/orders': typeof AppOrdersRouteWithChildren
   '/products': typeof AppProductsRouteWithChildren
   '/reports': typeof AppReportsRoute
   '/settings': typeof AppSettingsRoute
   '/staff': typeof AppStaffRoute
+  '/clients/$id': typeof AppClientsIdRoute
+  '/dispatches/$id': typeof AppDispatchesIdRoute
   '/orders/$id': typeof AppOrdersIdRoute
   '/products/$id': typeof AppProductsIdRoute
 }
@@ -130,14 +154,17 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/_app/clients': typeof AppClientsRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/dispatches': typeof AppDispatchesRoute
+  '/_app/dispatches': typeof AppDispatchesRouteWithChildren
   '/_app/inventory': typeof AppInventoryRoute
   '/_app/orders': typeof AppOrdersRouteWithChildren
   '/_app/products': typeof AppProductsRouteWithChildren
   '/_app/reports': typeof AppReportsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/staff': typeof AppStaffRoute
+  '/_app/clients/$id': typeof AppClientsIdRoute
+  '/_app/dispatches/$id': typeof AppDispatchesIdRoute
   '/_app/orders/$id': typeof AppOrdersIdRoute
   '/_app/products/$id': typeof AppProductsIdRoute
 }
@@ -147,6 +174,7 @@ export interface FileRouteTypes {
     | '/'
     | '/forgot-password'
     | '/login'
+    | '/clients'
     | '/dashboard'
     | '/dispatches'
     | '/inventory'
@@ -155,6 +183,8 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/staff'
+    | '/clients/$id'
+    | '/dispatches/$id'
     | '/orders/$id'
     | '/products/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -162,6 +192,7 @@ export interface FileRouteTypes {
     | '/'
     | '/forgot-password'
     | '/login'
+    | '/clients'
     | '/dashboard'
     | '/dispatches'
     | '/inventory'
@@ -170,6 +201,8 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/staff'
+    | '/clients/$id'
+    | '/dispatches/$id'
     | '/orders/$id'
     | '/products/$id'
   id:
@@ -178,6 +211,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/forgot-password'
     | '/login'
+    | '/_app/clients'
     | '/_app/dashboard'
     | '/_app/dispatches'
     | '/_app/inventory'
@@ -186,6 +220,8 @@ export interface FileRouteTypes {
     | '/_app/reports'
     | '/_app/settings'
     | '/_app/staff'
+    | '/_app/clients/$id'
+    | '/_app/dispatches/$id'
     | '/_app/orders/$id'
     | '/_app/products/$id'
   fileRoutesById: FileRoutesById
@@ -283,6 +319,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/clients': {
+      id: '/_app/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof AppClientsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/products/$id': {
       id: '/_app/products/$id'
       path: '/$id'
@@ -297,8 +340,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOrdersIdRouteImport
       parentRoute: typeof AppOrdersRoute
     }
+    '/_app/dispatches/$id': {
+      id: '/_app/dispatches/$id'
+      path: '/$id'
+      fullPath: '/dispatches/$id'
+      preLoaderRoute: typeof AppDispatchesIdRouteImport
+      parentRoute: typeof AppDispatchesRoute
+    }
+    '/_app/clients/$id': {
+      id: '/_app/clients/$id'
+      path: '/$id'
+      fullPath: '/clients/$id'
+      preLoaderRoute: typeof AppClientsIdRouteImport
+      parentRoute: typeof AppClientsRoute
+    }
   }
 }
+
+interface AppClientsRouteChildren {
+  AppClientsIdRoute: typeof AppClientsIdRoute
+}
+
+const AppClientsRouteChildren: AppClientsRouteChildren = {
+  AppClientsIdRoute: AppClientsIdRoute,
+}
+
+const AppClientsRouteWithChildren = AppClientsRoute._addFileChildren(
+  AppClientsRouteChildren,
+)
+
+interface AppDispatchesRouteChildren {
+  AppDispatchesIdRoute: typeof AppDispatchesIdRoute
+}
+
+const AppDispatchesRouteChildren: AppDispatchesRouteChildren = {
+  AppDispatchesIdRoute: AppDispatchesIdRoute,
+}
+
+const AppDispatchesRouteWithChildren = AppDispatchesRoute._addFileChildren(
+  AppDispatchesRouteChildren,
+)
 
 interface AppOrdersRouteChildren {
   AppOrdersIdRoute: typeof AppOrdersIdRoute
@@ -325,8 +406,9 @@ const AppProductsRouteWithChildren = AppProductsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppClientsRoute: typeof AppClientsRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
-  AppDispatchesRoute: typeof AppDispatchesRoute
+  AppDispatchesRoute: typeof AppDispatchesRouteWithChildren
   AppInventoryRoute: typeof AppInventoryRoute
   AppOrdersRoute: typeof AppOrdersRouteWithChildren
   AppProductsRoute: typeof AppProductsRouteWithChildren
@@ -336,8 +418,9 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppClientsRoute: AppClientsRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
-  AppDispatchesRoute: AppDispatchesRoute,
+  AppDispatchesRoute: AppDispatchesRouteWithChildren,
   AppInventoryRoute: AppInventoryRoute,
   AppOrdersRoute: AppOrdersRouteWithChildren,
   AppProductsRoute: AppProductsRouteWithChildren,
