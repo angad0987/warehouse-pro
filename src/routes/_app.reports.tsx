@@ -8,7 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/layout/app-shell";
-import { products, movements, orders, dispatches, productName } from "@/lib/mock-data";
+import {
+  products, movements, orders, dispatches, clients,
+  productName, clientName, consigneeName,
+} from "@/lib/mock-data";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/reports")({
@@ -19,10 +22,16 @@ export const Route = createFileRoute("/_app/reports")({
 function ReportsPage() {
   const [from, setFrom] = useState("2025-06-01");
   const [to, setTo] = useState("2025-06-30");
-  const [product, setProduct] = useState("all");
+  const [clientFilter, setClientFilter] = useState("all");
   const [status, setStatus] = useState("all");
 
   const exportAs = (format: "PDF" | "Excel" | "CSV") => toast.success(`Exported as ${format}`);
+
+  const filtProd = clientFilter === "all" ? products : products.filter(p => p.clientId === clientFilter);
+  const filtMov = clientFilter === "all" ? movements : movements.filter(m => m.clientId === clientFilter);
+  const filtOrd = (clientFilter === "all" ? orders : orders.filter(o => o.clientId === clientFilter))
+    .filter(o => status === "all" || o.status === status);
+  const filtDsp = clientFilter === "all" ? dispatches : dispatches.filter(d => d.clientId === clientFilter);
 
   return (
     <div>
@@ -33,22 +42,22 @@ function ReportsPage() {
           <div className="grid gap-2"><Label>From</Label><Input type="date" value={from} onChange={e => setFrom(e.target.value)} /></div>
           <div className="grid gap-2"><Label>To</Label><Input type="date" value={to} onChange={e => setTo(e.target.value)} /></div>
           <div className="grid gap-2">
-            <Label>Product</Label>
-            <Select value={product} onValueChange={setProduct}>
+            <Label>Client</Label>
+            <Select value={clientFilter} onValueChange={setClientFilter}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All products</SelectItem>
-                {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                <SelectItem value="all">All clients</SelectItem>
+                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label>Status</Label>
+            <Label>Order Status</Label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
-                {["Pending", "Dispatched", "Delivered"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                {["Pending", "Picking", "Packed", "Dispatched", "Delivered"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -69,18 +78,23 @@ function ReportsPage() {
         </TabsList>
 
         <TabsContent value="inventory">
-          <ReportCard title="Inventory Report" rows={products.map(p => [p.sku, p.name, p.category, p.stock, p.location])} headers={["SKU", "Product", "Category", "Stock", "Location"]} />
+          <ReportCard title="Inventory Report" headers={["SKU", "Product", "Client", "Category", "Stock", "Location"]}
+            rows={filtProd.map(p => [p.sku, p.name, clientName(p.clientId), p.category, p.stock, p.location])} />
         </TabsContent>
         <TabsContent value="movement">
-          <ReportCard title="Stock Movement Report" rows={movements.map(m => [m.date, productName(m.productId), m.type, m.qty, m.user])} headers={["Date", "Product", "Type", "Qty", "User"]} />
+          <ReportCard title="Stock Movement Report" headers={["Date", "Client", "Product", "Type", "Qty", "User"]}
+            rows={filtMov.map(m => [m.date, clientName(m.clientId), productName(m.productId), m.type, m.qty, m.user])} />
         </TabsContent>
         <TabsContent value="orders">
-          <ReportCard title="Orders Report" rows={orders.map(o => [o.id, o.client, o.items.reduce((s, i) => s + i.qty, 0), o.status, o.createdAt])} headers={["Order", "Client", "Items", "Status", "Created"]} />
+          <ReportCard title="Orders Report" headers={["Order", "Client", "Consignee", "Items", "Status", "Created"]}
+            rows={filtOrd.map(o => [o.id, clientName(o.clientId), consigneeName(o.consigneeId), o.items.reduce((s, i) => s + i.qty, 0), o.status, o.createdAt])} />
         </TabsContent>
         <TabsContent value="dispatch">
-          <ReportCard title="Dispatch Report" rows={dispatches.map(d => [d.id, d.orderId, d.vehicle, d.driver, d.date, d.status])} headers={["Dispatch", "Order", "Vehicle", "Driver", "Date", "Status"]} />
+          <ReportCard title="Dispatch Report" headers={["Dispatch", "Client", "Destination", "Vehicle", "Driver", "Date", "Status"]}
+            rows={filtDsp.map(d => [d.id, clientName(d.clientId), d.destinationCompany, d.vehicle, d.driver, d.date, d.status])} />
         </TabsContent>
       </Tabs>
+      <p className="sr-only">Range {from} to {to}</p>
     </div>
   );
 }

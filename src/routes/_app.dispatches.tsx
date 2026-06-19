@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Plus, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,17 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, StatusBadge } from "@/components/layout/app-shell";
-import { dispatches as seed, orders, type Dispatch } from "@/lib/mock-data";
+import {
+  dispatches as seed, orders, clientName, consigneeById, type Dispatch,
+} from "@/lib/mock-data";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/dispatches")({
   component: DispatchesPage,
   head: () => ({ meta: [{ title: "Dispatches — CoreWarehousing WMS" }] }),
 });
+
+const dispatchable = (s: string) => s === "Packed" || s === "Picking" || s === "Pending";
 
 function DispatchesPage() {
   const [list, setList] = useState<Dispatch[]>(seed);
@@ -29,13 +33,19 @@ function DispatchesPage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
 
+  const availableOrders = useMemo(() => orders.filter(o => dispatchable(o.status)), []);
+
   const create = () => {
     if (!orderId || !vehicle || !driver) { toast.error("Order, vehicle and driver required"); return; }
     const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+    const consignee = consigneeById(order.consigneeId);
     const d: Dispatch = {
       id: `DSP-${500 + list.length + 4}`,
-      orderId, vehicle, driver,
-      destination: `${order?.client ?? "Customer"} site`,
+      orderId, clientId: order.clientId, consigneeId: order.consigneeId,
+      destinationCompany: consignee?.name ?? "—",
+      vehicle, driver,
+      destination: consignee?.city ?? "—",
       date, status: "Scheduled", notes,
     };
     setList([d, ...list]);
@@ -47,7 +57,7 @@ function DispatchesPage() {
     <div>
       <PageHeader
         title="Dispatches"
-        description="Track outbound shipments and delivery status."
+        description="Outbound shipments — product owner to receiving company."
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Create Dispatch</Button></DialogTrigger>
@@ -58,7 +68,7 @@ function DispatchesPage() {
                   <Label>Order</Label>
                   <Select value={orderId} onValueChange={setOrderId}>
                     <SelectTrigger><SelectValue placeholder="Select order" /></SelectTrigger>
-                    <SelectContent>{orders.map(o => <SelectItem key={o.id} value={o.id}>{o.id} — {o.client}</SelectItem>)}</SelectContent>
+                    <SelectContent>{availableOrders.map(o => <SelectItem key={o.id} value={o.id}>{o.id} — {clientName(o.clientId)}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2"><Label>Vehicle number</Label><Input value={vehicle} onChange={e => setVehicle(e.target.value)} placeholder="TX-44-AB-1234" /></div>
@@ -81,19 +91,29 @@ function DispatchesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Dispatch ID</TableHead><TableHead>Vehicle</TableHead><TableHead>Driver</TableHead>
-                  <TableHead>Destination</TableHead><TableHead>Date</TableHead><TableHead>Status</TableHead>
+                  <TableHead>Dispatch ID</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Destination Company</TableHead>
+                  <TableHead>Vehicle</TableHead>
+                  <TableHead>Driver</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {list.map(d => (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">{d.id}</TableCell>
+                    <TableCell>{clientName(d.clientId)}</TableCell>
+                    <TableCell>{d.destinationCompany}</TableCell>
                     <TableCell className="font-mono text-xs">{d.vehicle}</TableCell>
                     <TableCell>{d.driver}</TableCell>
-                    <TableCell className="text-muted-foreground">{d.destination}</TableCell>
                     <TableCell>{d.date}</TableCell>
                     <TableCell><StatusBadge status={d.status} /></TableCell>
+                    <TableCell className="text-right">
+                      <Button asChild variant="ghost" size="icon"><Link to="/dispatches/$id" params={{ id: d.id }}><Eye className="h-4 w-4" /></Link></Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
